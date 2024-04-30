@@ -17,7 +17,8 @@ class p_oram:
         self.btree.inorder_traversal(self.btree.root)
 
     def ORAM_access(block_num):
-        #Use Pos Map to determine leaf / path
+        #Client provides block_num for required data block (in RAM)
+        #Use Pos Map to determine leaf / path to check
         #Pop entire path from Binary tree and store in stash
         #Retrieve bucket / block of interest and get RAM address
         #Retrieve data from ORAM using actual address
