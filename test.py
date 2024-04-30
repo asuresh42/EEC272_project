@@ -13,4 +13,7 @@ X = PathORAM()
 
 print(X.printSize()/8/1024, "KiB")
 
-X.accessAddr(0x0, cmd = "R")
+# data is a 64 bit block -> 8 bytes
+
+print(X.accessAddr(0x0, cmd = "W", data = [i for i in range(64)]))
+print(X.accessAddr(0x0, cmd = "R"))
