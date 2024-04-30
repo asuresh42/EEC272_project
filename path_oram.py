@@ -22,9 +22,10 @@ class p_oram:
         #Retrieve bucket / block of interest and get RAM address
         #Retrieve data from ORAM using actual address
         #Return data to client
+        return "lol"
 
-    def periodic_stash_eviction():
-        pass
+    def periodic_stash_eviction(self):
+        return "lol"
 
 
 
