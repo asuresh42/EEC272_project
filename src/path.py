@@ -13,7 +13,7 @@ class PathORAM:
         block_size : Block size of the ORAM
         bucket size : Size of the leaf bucket
     """
-    def __init__(self, block_size = 64, bucket_size = 1024):
+    def __init__(self, block_size = 64, bucket_size = 4):
         self.block_size = block_size
         self.bucket_size = bucket_size
         self.L = 3
@@ -21,7 +21,7 @@ class PathORAM:
         # size of the dram device in bits
         self.size_of_dram = self.block_size * self.bucket_size * (2 ** self.L  - 1)
         self.real_blocks = 0
-        self_dummy_blocks = self.bucket_size * (2 ** self.L  - 1)
+        self.dummy_blocks = self.bucket_size * (2 ** self.L  - 1)
         self.initializeTree()
         
     def printSize(self):
@@ -45,8 +45,10 @@ class PathORAM:
         # TODO: Make this automated
         # TODO: We need a AVL
         
-        self.initializePositionMap()
-    
+        self.initializePositionMapV2()
+        
+    def getAddr(self, block, position):
+        
     def accessAddr(self, addr, cmd, data = None):
         """This is the base method that the user needs to use to access a
         location in the ORAM structure.
@@ -67,44 +69,53 @@ class PathORAM:
         target_block_idx = incoming_block
         print(position)
         # The position map needs to be updated
-        new_position = self.updatePostitionMap(addr, position)
+        new_position = self.updatePostitionMapV2(addr, position)
         print(new_position)
         
         # Now check if we have this address in the stash. We'll discard the
         # position that we retrived with the already updated position
         idx_to_delete = -1
-        for idx, stash in enumerate(self.stash):
-            if stash.addr == addr:
+        for idx in range(len(self.stash)):
+            print(self.stash.addr)
+            if self.stash[idx].addr == addr:
                 # position = stash.position
                 idx_to_delete = idx
                 break
+        
         # if idx_to_delete != -1:
         #     # found this address in the stash!
         #     # FIXME:
         #     target_block_idx = -1
         # get the bucket to read
-        bucket = self.getBucket(position)
+        buckets = self.getBucketV2(position)
         
-        self.stash.append(bucket)           # S = S U bucket
+        for bucket in buckets:
+            new_stash = Stash(addr, position)
+            self.stash.append(new_stash)           # S = S U bucket
         
         # for every block in the bucket, we have to generate reads. This is an
         # expensive process
         # we need to return data is the command is a read request
         access_data = None
         
-        ########################## Trusted ####################################
+        ########################## Trusted End ################################
         
-        for idx, block in enumerate(bucket):
-            # our target block is in one onf these blocks
-            if target_block_idx == idx:
-                # This is a valid block
-                self.stash.append(Stash(addr, new_position))
-                if cmd == "R":
-                    access_data = block
-                else:
-                    bucket[idx] = data
-                    self.real_blocks += 1
-                    self.dummy_blocks -= 1
+        # Need to access every block from every bucket to make the number of
+        # reads consistent.
+        for idx, bucket in enumerate(buckets):
+            for jdx, block in enumerate(bucket):
+                # We read all of these blocks
+                # idx gives the level and jdx gives the block
+                this_addr = (idx + 1) * self.block_size  
+                if target_block_idx == idx:
+                    # This is a valid block
+                    self.stash.append(Stash(addr, new_position))
+                    if cmd == "R":
+                        access_data = block
+                    else:
+                        bucket[idx] = data
+                        self.real_blocks += 1
+                        self.dummy_blocks -= 1
         
         # TODO: Remapping code should be here.
         # now write this block to the tree at the new position
@@ -116,7 +127,7 @@ class PathORAM:
         
         return access_data
         
-        ########################## Trusted ####################################
+        ########################## Trusted End ################################
     
     def writeBucket(self, new_position, bucket):
         # FIXME: This is not 100% correct
@@ -151,6 +162,37 @@ class PathORAM:
             exit(-1)
         return bucket
     
+    def getBucketV2(self, position):
+        # return all buckets in this path
+        buckets = []
+        cur_pos = self.tree.root
+        for pos in position:
+            buckets.append(cur_pos.value)
+            if pos == 0:
+                cur_pos = cur_pos.left
+            elif pos == 1:
+                cur_pos = cur_pos.right
+        if len(buckets) == 0:
+            print("fatal: position not found")
+            exit(-1)
+        return buckets
+    
+    def initializePositionMapV2(self):
+        # Every index needs to have an root
+        self._idxMap = {}
+        self._posMap = {}
+        self._isEmptyLocation = []
+        for address in range(0, self.bucket_size * (2 ** self.L - 1)):
+            self._idxMap[address] = address
+            # So the binary string of the position is the path as a direction
+            pos = bin(random.randint(0, 2 ** (self.L - 1)))
+            self._posMap[address] = []
+            for bins in str(pos)[2:]:
+                self._posMap[address].append(int(bins))
+            if len(self._posMap[address]) == 1:
+                self._posMap[address].append(0)
+            self._isEmptyLocation.append(True)
+    
     def initializePositionMap(self):
         # Every index needs to have an root
         self._idxMap = {}
@@ -176,6 +218,15 @@ class PathORAM:
             self._idxMap[addr] = old_addr
         self._posMap[new_addr] = [random.randint(-1,1) for _ in range(self.L)]
         return self._posMap[new_addr]
+    
+    def updatePostitionMapV2(self, addr, old_position):
+        pos = bin(random.randint(0, 2 ** (self.L - 1)))
+        self._posMap[addr] = []
+        for bins in str(pos)[2:]:
+            self._posMap[addr].append(int(bins))
+        if len(self._posMap[addr]) == 1:
+            self._posMap[addr].append(0)
+        return self._posMap[addr]
 
     def getPosition(self, addr):
         # First find where is the index
