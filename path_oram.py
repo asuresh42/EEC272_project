@@ -31,29 +31,39 @@ class p_oram:
         #Client provides block_num for required data block (in RAM)
 
         #Use Pos Map to determine leaf / path to check
+        if(block_num not in self.pos_map.keys()):
+            print("Unable to find block")
+            return None
+
         leaf_id = self.pos_map[block_num]
         leaf_path = self.btree.leaf_paths[leaf_id]
 
         #Pop entire path from Binary tree and store in stash
         self.stash_populate(leaf_path)
-
+        
         #Retrieve bucket / block of interest and get RAM address
+        client_block = None
         for block in self.stash:
             if((block['block_num'] == block_num) and (block["valid"])):
                 client_block = block
         
         #Retrieve data from ORAM using actual address
-        block_data = block["Data"]
-        
-        #Return data to client
-        return block_data
+        if(not client_block):
+            print("Unable to find block")
+            return None
+        else:
+            block_data = client_block["Data"]
+            #Return data to client
+            return block_data
 
     def stash_populate(self, path):
         node = self.btree.root
         for i in path:
-            if(node.data["vaid"]):
+            if(node.data["valid"]):
                 self.stash.append(node.data)
+                self.pos_map[node.data["block_num"]] = "stash"
                 node.data = self.default_bucket
+                
             if(i):
                 node = node.right
             else:
@@ -66,9 +76,16 @@ class p_oram:
         if(status["data_placed"]):
             print(f"Successfully placed data in path to leaf {leaf_candidate}")
             self.pos_map[block_num] = leaf_candidate
+            return
         else:
-            print("Failed to place data")
+            for leaf_candidate in self.leaves_list:
+                status = self.add_to_btree(node=self.btree.root, data=data, block_num=block_num, notdummy=1, random_leaf_path=self.btree.leaf_paths[leaf_candidate])
+                if(status["data_placed"]):
+                    print(f"Successfully placed data in path to leaf {leaf_candidate}")
+                    self.pos_map[block_num] = leaf_candidate
+                    return
 
+        print("Failed to place data. Tree potentially full")
 
     def add_to_btree(self, node, data, block_num, notdummy, random_leaf_path):
         if(len(random_leaf_path)):
@@ -97,6 +114,12 @@ class p_oram:
     def periodic_stash_eviction(self):
         return ""
 
+    def __is_block_not_in_posmap__(self, block_num):
+        if block_num in self.pos_map.keys():
+            return 0
+        else:
+            return 1
+
 
 
 
@@ -105,11 +128,28 @@ class p_oram:
 if __name__ == '__main__':
  poram_instance = p_oram()
  poram_instance.print_btree()
+ print(f"Pos Map = {poram_instance.pos_map}")
+ print(f"Stash = {poram_instance.stash}")
 
  #add a few entries into ORAM
- random_data = generate_random_data(8)
- poram_instance.ORAM_write(69, random_data)
+ for i in range(14):
+    random_data = generate_random_data(8)
+    while(1):
+        random_block = random.randint(0, 100)
+        if(poram_instance.__is_block_not_in_posmap__(random_block)):
+            break
+    poram_instance.ORAM_write(random_block, random_data)
 
  poram_instance.print_btree()
+ print(f"Pos Map = {poram_instance.pos_map}")
+ print(f"Stash = {poram_instance.stash}")
+
+ read_block = random.choice(list(poram_instance.pos_map.keys()))
+ read_data = poram_instance.ORAM_read(read_block)
+
+ print(f"Read data from PORAM. Block no = {read_block}, Data = {read_data}")
+
+print(f"Pos Map = {poram_instance.pos_map}")
+print(f"Stash = {poram_instance.stash}")
 
 
