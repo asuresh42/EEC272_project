@@ -1,4 +1,3 @@
 # EEC272_project
 
-This is the kg branch. I'll make my changes on this branch before mergring with
-the other branches.
+This is the Divyansh's dev11 branch, branched from kg/pathORAM. I'll add my modifications on this branch.
