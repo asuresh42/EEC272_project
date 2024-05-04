@@ -47,8 +47,7 @@ class PathORAM:
         
         self.initializePositionMapV2()
         
-    def getAddr(self, block, position):
-        
+    #def getAddr(self, block, position):
     def accessAddr(self, addr, cmd, data = None):
         """This is the base method that the user needs to use to access a
         location in the ORAM structure.
@@ -63,10 +62,11 @@ class PathORAM:
         
         # Get the effective address for the given addr
         position = self.getPosition(addr)
-        # From a given address, we compute its corresponding block idx
-        incoming_block = addr % self.bucket_size
+
+        # From a given address, we compute its corresponding block idx (in one node which bucket)
+        incoming_bucket_idx = addr % self.bucket_size
         # this is our initial target block
-        target_block_idx = incoming_block
+        target_block_idx = incoming_bucket_idx
         print(position)
         # The position map needs to be updated
         new_position = self.updatePostitionMapV2(addr, position)
