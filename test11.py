@@ -1,5 +1,5 @@
 import random
-from DRAM_init import client_DRAM
+from DRAM_init import external_DRAM
 
-dram = client_DRAM(block_size=32, number_of_blocks=16)
+dram = external_DRAM(block_size=32, number_of_blocks=16)
 dram.print_DRAM_contents()
