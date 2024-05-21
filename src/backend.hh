@@ -1,5 +1,12 @@
+#ifndef BACKEND_HH
+#define BACKEND_HH
+
 #include <iostream>
 #include <vector>
+#include <map>
+#include <cmath>
+
+#include "binary_tree.hh"
 
 // Define Addr as addresses. In this example, we can take in 64 bit addresses.
 typedef uint64_t Addr;
@@ -27,31 +34,44 @@ class PathORAM {
         bucket size : Size of the leaf bucket
     */
     private:
-        // This 
+        // We keep the basic variables as private
         uint64_t size_of_dram;
+        int block_size;
+        int bucket_size;
+        int L;
+        bool test;
         // Keep a table for the position. We'll be using this for the remapping
-        map<int, int>positions;
+        map<int, int*>position_map;
+
+        struct BTNode *tree;
         // 
     public:
-        // The class constructor to initialize the path ORAM module.
-        PathORAM(int block_size = 64,
-                    int bucket_size = 1024, bool test = true);
+        // The class constructor to initialize the path ORAM module. The block
+        // is a processor cache line. So block size is fixed to 64.
+        PathORAM(int block_size = 64, int L = 22, int bucket_size = 4, bool test = true);
         // Get the size of the DRAM device. In DRAMsim3, this should be the
         // same as the simulated memory.
         int getSizeOfDRAM();
         // Initialize the PathORAM module. For testing, use initializeTreeTest
         bool initializeTree();
-        bool initializeTreeTest();
         // Initialize the position map.
         bool initializePositionMap();
+        bool updatePostitionMap(int position[]);
 
-        bool accessAddr(Addr addr, char cmd, uint8_t data = nullptr);
+        bool accessAddr(Addr addr, char cmd, uint8_t *data = nullptr);
         // If accessAddr returns true, then we have to generate all read
         // addresses.
         vector<Addr>readAddresses();
         // We then need to generate the same number of writes to make the ORAM
         // oblivious.
         vector<Addr>writeAddresses();
-        bool updatePostitionMap(int position);
+        // Looks like ORAM serializes every single memory request.
 
-}
+        // utility functions to debug
+        unsigned int getSizeInB();
+        unsigned int getSizeInMiB();
+
+        void printPositionMap();
+};
+
+#endif
