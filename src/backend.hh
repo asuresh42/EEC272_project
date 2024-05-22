@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <cassert>
 
 #include "binary_tree.hh"
 
@@ -41,14 +42,19 @@ class PathORAM {
         int L;
         bool test;
         // Keep a table for the position. We'll be using this for the remapping
-        map<int, int*>position_map;
+        // map<int, vector<int>>position_map;
+
+        // We also need a path map, which is basically the reverse of the
+        // position map.
+        map<vector<int>, int>path_map;
 
         struct BTNode *tree;
         // 
     public:
         // The class constructor to initialize the path ORAM module. The block
         // is a processor cache line. So block size is fixed to 64.
-        PathORAM(int block_size = 64, int L = 22, int bucket_size = 4, bool test = true);
+        PathORAM(int block_size = 64, int L = 22,
+                    int bucket_size = 4, bool test = true);
         // Get the size of the DRAM device. In DRAMsim3, this should be the
         // same as the simulated memory.
         int getSizeOfDRAM();
@@ -56,17 +62,22 @@ class PathORAM {
         bool initializeTree();
         // Initialize the position map.
         bool initializePositionMap();
-        bool updatePostitionMap(int position[]);
+        vector<int>  updatePostitionMap(Addr addr, vector<int>old_position);
+        void initializePathMap();
+        // bool updatePathAndPositionMaps();
+        vector<int>getPosition(Addr addr);
 
         bool accessAddr(Addr addr, char cmd, uint8_t *data = nullptr);
         // If accessAddr returns true, then we have to generate all read
         // addresses.
-        vector<Addr>readAddresses();
+        vector<Addr>readAddresses(vector<int> position);
         // We then need to generate the same number of writes to make the ORAM
         // oblivious.
-        vector<Addr>writeAddresses();
+        vector<Addr>writeAddresses(vector<int> position);
         // Looks like ORAM serializes every single memory request.
 
+        size_t findLowestCommonAncestor(std::vector<int>arr1,
+                                        std::vector<int>arr2);
         // utility functions to debug
         unsigned int getSizeInB();
         unsigned int getSizeInMiB();
