@@ -2,6 +2,8 @@
 #define BACKEND_HH
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <vector>
 #include <map>
 #include <cmath>
@@ -69,6 +71,10 @@ class PathORAM {
         vector<int>getPosition(Addr addr);
 
         bool accessAddr(Addr addr, char cmd, uint8_t *data = nullptr);
+        // If accessAddr returns true, then we have to generate all read
+        // addresses.
+        bool accessAddr(Addr addr, char cmd, uint64_t time, string out_file,
+                                bool dramsim = true, uint8_t *data = nullptr);
         // If accessAddr returns true, then we have to generate all read
         // addresses.
         vector<Addr>readAddresses(vector<int> position);

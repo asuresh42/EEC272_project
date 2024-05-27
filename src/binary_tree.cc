@@ -50,21 +50,26 @@ void betterDfs(struct BTNode* node, std::vector<int> path, int pathLen) {
 
 bool swapNodes(struct BTNode* root, int node_idx, std::vector<int> path) {
     struct BTNode *temp = root;
-    for (size_t i = 0 ; i < path.size() ; i++) {
+    for (size_t i = 0 ; i < path.size() - 1 ; i++) {
+        // Our temp position must be same as the node index. Otherwise there
+        // must be something wrong with the traversal.
         assert(path[i] == temp->node_idx);
         // Check if we are at the required position
         if (temp->node_idx == node_idx) {
-            // got it! now swap the positions and break
+            // got it! now swap the positions and break.
             struct BTNode *another_temp = temp->left;
             temp->left = temp->right;
             temp->right = another_temp;
             break;
         }
-        // iterate over each of the path indices.
-        if (temp->left->node_idx == path[i])
+        // iterate over each of the path indices. The next position is given by
+        // the path of the algorithm.
+        if (temp->left->node_idx == path[i + 1])
             temp = temp->left;
-        else
+        else if (temp->right->node_idx == path[i + 1])
             temp = temp->right;
+        else
+            assert(false && "bug: fatal direction!");
     }
     return true;
 }

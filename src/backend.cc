@@ -160,14 +160,87 @@ bool PathORAM::accessAddr(Addr addr, char cmd, uint8_t *data) {
     }
     int block = addr / (bucket_size * block_size);
     std::cout << block << std::endl;
-    
-    Addr incoming_block = addr % bucket_size;
-
-    Addr target_block_index = incoming_block;
 
     vector<int> new_position = updatePostitionMap(addr, position, block);
-    printPositionMap();
+    if (test)
+        printPositionMap();
     vector<Addr>set_of_writes = writeAddresses(new_position);
+    // If debugging is enabled, we print the list of all the addresses
+    if (test) {
+        for (int i = 0 ; i < L * bucket_size ; i++)
+            std::cout << "0x" << std::hex << set_of_writes[i] <<
+                         std::dec << std::endl;
+    }
+    // Remap complete!
+    return true;
+}
+
+
+bool PathORAM::accessAddr(Addr addr, char cmd, uint64_t time, string out_file,
+                                bool dramsim, uint8_t *data) {
+    // This method should be used to generate DRAMsim3 traces.
+    assert(dramsim);
+
+    // This is a copy-paste of the python code. There are some filler code to
+    // simply test the module. 
+
+    // Now we need to read a path where this block is an element. We can just
+    // read the first path where this block is an element of.
+
+    // std::cout << block << " " << bucket << std::endl;
+
+    // Set an address bounds check
+    if (addr < 0x0 || addr >= size_of_dram) {
+        assert(false && "addr out of bounds!");
+    }
+    if (test) {
+        // Print the position map at every memory access
+        printPositionMap();
+    }
+    vector<int> position = getPosition(addr);
+
+    // If debuggin is enabled, then we print the entire position that we read.
+    if (test) {
+        std::cout << "Position: ";
+        for (int i = 0 ; i < L ; i++)
+            std::cout << position[i] << " ";
+        std::cout << std::endl;
+    }
+
+    // generate read requests for this position
+    vector<Addr>set_of_reads = readAddresses(position);
+    // Put these addresses into the DRAMsim3 trace.
+    ofstream output_file(out_file, ios::app);
+    for (size_t i = 0 ; i < set_of_reads.size() ; i++) {
+        std::stringstream stream;
+        stream << std::hex << set_of_reads[i];
+        std::string result( stream.str() );
+        output_file << "0x" << result << " READ\t" << time << std::endl;
+    }
+
+    // If debugging is enabled, we print the list of all the addresses
+    if (test) {
+        for (int i = 0 ; i < L * bucket_size ; i++)
+            std::cout << "0x" << std::hex << set_of_reads[i] <<
+                         std::dec << std::endl;
+    }
+    int block = addr / (bucket_size * block_size);
+    std::cout << block << std::endl;
+
+    vector<int> new_position = updatePostitionMap(addr, position, block);
+    if (test)
+        printPositionMap();
+    vector<Addr>set_of_writes = writeAddresses(new_position);
+    // Put these addresses into the DRAMsim3 trace.
+
+    for (size_t i = 0 ; i < set_of_writes.size() ; i++) {
+        std::stringstream stream;
+        stream << std::hex << set_of_writes[i];
+        std::string result( stream.str() );
+        output_file << "0x" << result << " WRITE\t" << time << std::endl;
+    }
+    output_file.close();
+
     // If debugging is enabled, we print the list of all the addresses
     if (test) {
         for (int i = 0 ; i < L * bucket_size ; i++)
