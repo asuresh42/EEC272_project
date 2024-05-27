@@ -62,7 +62,8 @@ class PathORAM {
         bool initializeTree();
         // Initialize the position map.
         bool initializePositionMap();
-        vector<int>  updatePostitionMap(Addr addr, vector<int>old_position);
+        vector<int>updatePostitionMap(Addr addr, vector<int>old_position,
+                                                            int block);
         void initializePathMap();
         // bool updatePathAndPositionMaps();
         vector<int>getPosition(Addr addr);
@@ -78,6 +79,7 @@ class PathORAM {
 
         size_t findLowestCommonAncestor(std::vector<int>arr1,
                                         std::vector<int>arr2);
+        size_t findLowestCommonAncestor(std::vector<int>arr1, int block);
         // utility functions to debug
         unsigned int getSizeInB();
         unsigned int getSizeInMiB();

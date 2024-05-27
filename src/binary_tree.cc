@@ -41,15 +41,30 @@ void betterDfs(struct BTNode* node, std::vector<int> path, int pathLen) {
     if (node->left == NULL && node->right == NULL) {
         // This is a leaf node. Add this to the path table.
         position_map[path_index++] = path;
-
-        // printf("Path length %d: ", pathLen);
-        // for (int i = 0; i < pathLen; i++) {
-        //     printf("%d ", path[i]);
-            // printf("-- %d . %d ", path_index - 1, position_map[path_index -  1][i]);
-        // }
-        // printf("\n");
     } else {
         betterDfs(node->left, path, pathLen);
         betterDfs(node->right, path, pathLen);
     }
+}
+
+
+bool swapNodes(struct BTNode* root, int node_idx, std::vector<int> path) {
+    struct BTNode *temp = root;
+    for (size_t i = 0 ; i < path.size() ; i++) {
+        assert(path[i] == temp->node_idx);
+        // Check if we are at the required position
+        if (temp->node_idx == node_idx) {
+            // got it! now swap the positions and break
+            struct BTNode *another_temp = temp->left;
+            temp->left = temp->right;
+            temp->right = another_temp;
+            break;
+        }
+        // iterate over each of the path indices.
+        if (temp->left->node_idx == path[i])
+            temp = temp->left;
+        else
+            temp = temp->right;
+    }
+    return true;
 }

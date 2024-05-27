@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <cassert>
 
 // TODO: Add namespaces to make this code better!
 
@@ -21,6 +22,9 @@ struct BTNode {
 };
 
 struct BTNode* createNode(int bucket_size);
+
+// For remapping, a path and a target node is given to swap
+bool swapNodes(struct BTNode* root, int node_idx, std::vector<int> path);
 
 // This function should automatically fillup the tree.
 void fillTree(struct BTNode *node, int bucket_size, int depth);
