@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
     // we now define all the expected arguments.
 
-    int expected_count = 6;
+    int expected_count = 7;
 
     // initialize the argparser all the input parameters.
     Argparse args(argc, expected_count, info);
@@ -33,10 +33,14 @@ int main(int argc, char *argv[]) {
             "-z", "--bucket-size", "bucket-size of a node", "4"
     );
     args.initArgs(
-            "-l", "--length", "length of the tree", "23"
+            "-d", "--length", "length/depth of the tree", "23"
     );
     args.initArgs(
             "-t", "--trace", "supply a trace for the program", ""
+    );
+
+    args.initArgs(
+            "-l", "--limit", "supply a limit to the input trace", ""
     );
     args.initArgs(
             "-o", "--output", "supply an output file name", ""
@@ -60,7 +64,6 @@ int main(int argc, char *argv[]) {
 
     // The amount of data that the cacheline reads in the system.
     int block_size, bucket_size, L;
-    std::cout << args.getArgs("--block-size") << " " << "1" << std::endl;
     if (args.getArgs("--block-size") == "")
         block_size = 64;
     else
@@ -101,6 +104,12 @@ int main(int argc, char *argv[]) {
     else
         output_trace = args.getArgs("--output");
 
+    int limit, counter = 0;
+    if (args.getArgs("--limit") == "")
+        limit = 0;
+    else
+        limit = std::stoi(args.getArgs("--limit"));
+
     if (debug)
         std::cout << "Creating an ORAM module!" << std::endl;
 
@@ -133,19 +142,38 @@ int main(int argc, char *argv[]) {
     else {
         while (getline (TraceInput, trace_line)) {
             // Output the text from the file
-            // std::cout << trace_line[11] << std::endl;
+            if (debug)
+                std::cout << trace_line << std::endl;
 
-            Addr addr = stoi(trace_line.substr(0, 10), 0, 16);
+            Addr addr = stoi(trace_line.substr(0, trace_line.find(" ")), 0, 16);
+            trace_line = trace_line.substr(trace_line.find(" ") + 1, trace_line.size());
+            
+            if (debug)
+                std::cout << trace_line << std::endl;
             char cmd;
-            if (trace_line[11] == 'R')
+            if (trace_line[0] == 'R') {
                 cmd = 'R';
+            }
             else
                 cmd = 'W';
-            uint64_t time = stoi(trace_line.substr(trace_line.find("  "),
-                                    trace_line.size()));
+            trace_line = trace_line.substr(8, trace_line.size());
+            
+            if (debug)
+                std::cout << trace_line << std::endl;
+            uint64_t time = stoi(trace_line.substr(0, trace_line.size()));
+            if (debug)
+                std::cout << trace_line << std::endl;
 
-            std::cout << addr << " " << cmd << " " << time << std::endl;
+            if (debug)
+                std::cout << addr << " " << cmd << " " << time << std::endl;
             PO.accessAddr(addr, cmd, time, output_trace, true, nullptr);
+
+            // see if there is a limit
+            if (limit != 0) {
+                std::cout << ((float)counter * 100) / (float) limit << " %" << std::endl;
+                if (counter++ == limit)
+                    break;
+            }
         }
     }
     

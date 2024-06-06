@@ -159,7 +159,8 @@ bool PathORAM::accessAddr(Addr addr, char cmd, uint8_t *data) {
                          std::dec << std::endl;
     }
     int block = addr / (bucket_size * block_size);
-    std::cout << block << std::endl;
+    if (test)
+        std::cout << block << std::endl;
 
     vector<int> new_position = updatePostitionMap(addr, position, block);
     if (test)
