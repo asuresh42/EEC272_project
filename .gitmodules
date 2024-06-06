@@ -1,3 +1,12 @@
 [submodule "ext/DRAMsim3"]
 	path = ext/DRAMsim3
 	url = https://github.com/umd-memsys/DRAMsim3.git
+[submodule "src/ext/CppArgParse"]
+	path = src/ext/CppArgParse
+	url = https://github.com/kaustav-goswami/CppArgParse.git
+[submodule "ext/CppArgParse"]
+	path = ext/CppArgParse
+	url = https://github.com/kaustav-goswami/CppArgParse.git
+[submodule "ext/cpp-arg-parse"]
+	path = ext/cpp-arg-parse
+	url = https://github.com/kaustav-goswami/cpp-arg-parse.git
